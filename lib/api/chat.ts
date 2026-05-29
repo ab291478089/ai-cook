@@ -1,13 +1,7 @@
-/**
- * API 调用封装
- */
-const API_BASE = "http://localhost:8001";
+const API_BASE = "http://localhost:8001/api/v1";
 
-/**
- * 获取 OSS 预签名上传 URL
- */
 export async function getOssPresignUrl(filename: string): Promise<{ uploadUrl: string; accessUrl: string; contentType: string }> {
-    const response = await fetch(`${API_BASE}/api/v1/oss/presign?filename=${filename}`);
+    const response = await fetch(`${API_BASE}/oss/presign?filename=${filename}`);
     if (!response.ok) {
         throw new Error("获取上传 URL 失败");
     }
@@ -19,31 +13,27 @@ export async function getOssPresignUrl(filename: string): Promise<{ uploadUrl: s
     };
 }
 
-/**
- * 上传图片到 OSS（通过后端代理）
- */
 export async function uploadImageToOss(file: File): Promise<string> {
-    // 创建 FormData
-    const formData = new FormData();
-    formData.append("file", file);
+    const ext = file.name.split(".").pop() || "jpg";
+    const filename = `${Date.now()}.${ext}`;
 
-    // 通过后端代理上传
-    const response = await fetch(`${API_BASE}/api/v1/oss/upload`, {
-        method: "POST",
-        body: formData,
+    const { uploadUrl, accessUrl, contentType } = await getOssPresignUrl(filename);
+
+    const response = await fetch(uploadUrl, {
+        method: "PUT",
+        body: file,
+        headers: {
+            "Content-Type": contentType,
+        },
     });
 
     if (!response.ok) {
         throw new Error(`图片上传失败: ${response.status}`);
     }
 
-    const data = await response.json();
-    return data.accessUrl;
+    return accessUrl;
 }
 
-/**
- * 流式聊天
- */
 export async function streamChat(
     message: string,
     onChunk: (chunk: string) => void,
@@ -53,7 +43,7 @@ export async function streamChat(
     threadId?: string
 ): Promise<void> {
     try {
-        const url = new URL(`${API_BASE}/api/v1/chat/stream`);
+        const url = new URL(`${API_BASE}/chat/stream`);
 
         const response = await fetch(url.toString(), {
             method: "POST",
@@ -93,11 +83,8 @@ export async function streamChat(
     }
 }
 
-/**
- * 获取聊天历史
- */
 export async function getChatHistory(threadId: string): Promise<{ role: string; content: string }[]> {
-    const response = await fetch(`${API_BASE}/api/v1/chat/messages?thread_id=${threadId}`);
+    const response = await fetch(`${API_BASE}/chat/messages?thread_id=${threadId}`);
     if (!response.ok) {
         throw new Error("获取历史消息失败");
     }
@@ -105,11 +92,8 @@ export async function getChatHistory(threadId: string): Promise<{ role: string; 
     return data.messages;
 }
 
-/**
- * 清空聊天历史
- */
 export async function clearChatHistory(threadId: string): Promise<void> {
-    const response = await fetch(`${API_BASE}/api/v1/chat/messages?thread_id=${threadId}`, {
+    const response = await fetch(`${API_BASE}/chat/messages?thread_id=${threadId}`, {
         method: "DELETE",
     });
     if (!response.ok) {

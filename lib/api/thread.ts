@@ -1,12 +1,8 @@
-/**
- * 会话相关 API (Mock 实现)
- */
 import { ThreadMeta, ThreadListResponse, CreateThreadResponse } from "@/types/thread";
 import { generateUUID } from "@/lib/utils";
 
-const API_BASE = "http://localhost:8001";
+const API_BASE = "http://localhost:8001/api/v1";
 
-// Mock 数据存储
 let mockThreads: ThreadMeta[] = [
   {
     id: "thread-1",
@@ -24,29 +20,21 @@ let mockThreads: ThreadMeta[] = [
   }
 ];
 
-// 是否使用 Mock 数据（后续对接真实API时改为 false）
 const USE_MOCK = false;
 
-/**
- * 获取会话列表
- */
 export async function getThreadList(): Promise<ThreadListResponse> {
   if (USE_MOCK) {
-    // 模拟网络延迟
     await new Promise(resolve => setTimeout(resolve, 200));
     return { threads: [...mockThreads].sort((a, b) => b.updatedAt - a.updatedAt) };
   }
 
-  const response = await fetch(`${API_BASE}/api/v1/threads`);
+  const response = await fetch(`${API_BASE}/threads`);
   if (!response.ok) {
     throw new Error("获取会话列表失败");
   }
   return response.json();
 }
 
-/**
- * 创建新会话
- */
 export async function createThread(title?: string): Promise<CreateThreadResponse> {
   if (USE_MOCK) {
     await new Promise(resolve => setTimeout(resolve, 200));
@@ -64,7 +52,7 @@ export async function createThread(title?: string): Promise<CreateThreadResponse
     };
   }
 
-  const response = await fetch(`${API_BASE}/api/v1/threads`, {
+  const response = await fetch(`${API_BASE}/threads`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ title }),
@@ -75,9 +63,6 @@ export async function createThread(title?: string): Promise<CreateThreadResponse
   return response.json();
 }
 
-/**
- * 删除会话
- */
 export async function deleteThread(threadId: string): Promise<void> {
   if (USE_MOCK) {
     await new Promise(resolve => setTimeout(resolve, 200));
@@ -85,7 +70,7 @@ export async function deleteThread(threadId: string): Promise<void> {
     return;
   }
 
-  const response = await fetch(`${API_BASE}/api/v1/threads/${threadId}`, {
+  const response = await fetch(`${API_BASE}/threads/${threadId}`, {
     method: "DELETE",
   });
   if (!response.ok) {
@@ -93,9 +78,6 @@ export async function deleteThread(threadId: string): Promise<void> {
   }
 }
 
-/**
- * 更新会话信息
- */
 export async function updateThread(threadId: string, updates: Partial<Pick<ThreadMeta, 'title'>>): Promise<void> {
   if (USE_MOCK) {
     await new Promise(resolve => setTimeout(resolve, 200));
@@ -110,7 +92,7 @@ export async function updateThread(threadId: string, updates: Partial<Pick<Threa
     return;
   }
 
-  const response = await fetch(`${API_BASE}/api/v1/threads/${threadId}`, {
+  const response = await fetch(`${API_BASE}/threads/${threadId}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(updates),
